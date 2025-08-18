@@ -1,8 +1,24 @@
 import Head from "next/head";
 import '../styles/globals.css';
 import { ThemeProvider } from "next-themes";
+import { useEffect } from "react";
 
 export default function MyApp({ Component, pageProps }) {
+
+    useEffect(() => {
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    }, []);
+
   return (
     <ThemeProvider attribute="class">
       <Head>
