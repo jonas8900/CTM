@@ -9,6 +9,7 @@ const tailwindConfig = {
     extend: {
       fontFamily: {
         poppins: ["Poppins", "sans-serif"],
+        themysion: ['"Themysion"', "ui-sans-serif", "system-ui"],
       },
     },
   },

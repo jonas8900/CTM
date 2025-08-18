@@ -11,7 +11,7 @@ export default class MyDocument extends Document {
           <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
           <link href="https://fonts.googleapis.com/css2?family=Inter&family=Lato&family=Poppins&family=Roboto&display=swap" rel="stylesheet"/>
         </Head>
-        <body className="bg-gray-50 text-gray-900 antialiased dark:bg-gray-900 dark:text-gray-100">
+        <body className="bg-gray-50 font-poppins text-gray-900 antialiased dark:bg-gray-900 dark:text-gray-100">
             <Main />
             <NextScript />
         </body>
