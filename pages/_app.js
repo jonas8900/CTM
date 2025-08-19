@@ -20,7 +20,7 @@ export default function MyApp({ Component, pageProps }) {
     }, []);
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="ctm-theme" disableTransitionOnChange>
       <Head>
             <meta name="viewport" content="width=device-width,initial-scale=1" />
             <title>CatchTheMoment</title>
