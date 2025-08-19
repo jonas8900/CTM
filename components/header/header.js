@@ -7,7 +7,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="relative z-50 border-b border-zinc-200/60 dark:border-zinc-800 bg-white/70  dark:bg-zinc-900/60 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <header className="relative z-50 border-b border-zinc-200/60 mb-5 dark:border-zinc-800 bg-white/70  dark:bg-zinc-900/60 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="mx-auto max-w-5xl min-h-[100px] flex items-center justify-between gap-4 px-4 py-3">
         <div className="flex items-center gap-3">
           <Image

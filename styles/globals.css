@@ -23,9 +23,8 @@
   --font-themysion: "Themysion", ui-sans-serif, system-ui, sans-serif;
 
   --color-primary: #0C2444;
-  --button-color: #607584;
-  --font-color: #000000;
-  --red-color: #ED7781;
-  --hover-color: #ffffff;
-  --font-color-secondary: #80D0DF;
+  --color-secondary: #FFD4CA;
+  --color-button-primary: #B3DEE2;
+  --color-highlight: #E53D00;
+  --color-highlight-secondary: #D6FF79;
 }
