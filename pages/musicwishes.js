@@ -3,7 +3,7 @@ import SubmitButton from "@/components/buttons/submitbutton";
 import MusicWishCard from "@/components/cards/musicwish";
 import Header from "@/components/header/header";
 import Image from "next/image";
-import { IoCloseSharp } from "react-icons/io5";
+import { IoCloseSharp, IoRefresh } from "react-icons/io5";
 import { useRouter } from "next/router";
 import useGuest from "@/components/customhooks/useGuest";
 import ErrorMessage from "@/components/toast/ErrorMessage";
@@ -134,8 +134,16 @@ export default function Services() {
           Musikwünsche
         </h2>
 
-        <div className="border rounded-sm border-gray-300 dark:border-gray-700 p-4 overflow-y-auto min-h-0 h-full overscroll-contain">
-          <ul className="space-y-2">
+
+        <div className="border relative rounded-sm border-gray-300 dark:border-gray-700 p-4 overflow-y-auto min-h-0 h-full overscroll-contain">
+           <button
+            onClick={() => mutate()} 
+            className="p-2 absolute top-1 right-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Liste aktualisieren"
+          >
+            <IoRefresh className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+          </button>
+          <ul className="space-y-2 mt-6">
             {wishes?.map((wish) => (
               <MusicWishCard key={wish._id} wish={wish} />
             ))}
