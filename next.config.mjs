@@ -1,17 +1,16 @@
-import withPWAInit from "@ducanh2912/next-pwa";
+import withPWA from "@ducanh2912/next-pwa";
 
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = process.env.NODE_ENV === "production";
 
-const withPWA = withPWAInit({
+const withPWAConfigured = withPWA({
   dest: "public",
   disable: !isProd,
 });
 
-
 const nextConfig = {
-    images: {
-        remotePatterns: [],
-    },
+  images: {
+    domains: ["i.scdn.co"],
+  },
 };
-export default withPWA(nextConfig);
 
+export default withPWAConfigured(nextConfig);
