@@ -30,12 +30,13 @@ export default async function handler(req, res) {
       image,
       status: "Wartet",
       time: Date.now(), 
-      user: user._id,   
+      userid: user._id,   
+      firstname: user.firstname,
+      lastname: user.lastname,
     });
 
-    await newWish.populate("user", "firstname lastname");
     return res.status(201).json(newWish);
-    
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Serverfehler", error: err.message });

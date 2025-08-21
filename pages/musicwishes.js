@@ -88,6 +88,8 @@ export default function Services() {
       artist: chosenSong.artist,
       image: chosenSong.image,
       userId: user?._id,
+      firstname: user?.firstname,
+      lastname: user?.lastname,
     };
 
     const res = await fetch("/api/music/newWish", {

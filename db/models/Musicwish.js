@@ -8,7 +8,9 @@ const musicWishSchema = new Schema({
     image: { type: String, required: true },
     status: { type: String, enum: ["Wartet", "Angenommen", "Abgelehnt"], default: "Wartet", required: true },
     time: { type: Date, default: Date.now },
-    user: { type: String, ref: "Guest", required: true },
+    userid: { type: String, ref: "Guest", required: true },
+    firstname: { type: String, required: true },
+    lastname: { type: String, required: true },
 });
 
 
