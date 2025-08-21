@@ -9,7 +9,18 @@ const withPWAConfigured = withPWA({
 
 const nextConfig = {
   images: {
-    domains: ["i.scdn.co"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "catchthemoment.s3.eu-central-1.amazonaws.com",
+        pathname: "/uploads/**",
+      },
+      {
+        protocol: "https",
+        hostname: "i.scdn.co",
+        pathname: "**",
+      },
+    ],
   },
 };
 

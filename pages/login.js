@@ -2,18 +2,24 @@ import Header from "@/components/header/header";
 import ErrorMessage from "@/components/toast/ErrorMessage";
 import SuccessMessage from "@/components/toast/SuccessMessage";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function Login() {
     const router = useRouter();
     const [showError, setShowError] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [toastMessage, setToastMessage] = useState("");
+    const [submitClicked, setSubmitClicked] = useState(false);
+    const submittingRef = useRef(false)
 
 
 
     async function handleSubmit(e) {
         e.preventDefault();
+
+        if (submittingRef.current) return;        
+        submittingRef.current = true;
+        setSubmitClicked(true);
 
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData);
@@ -41,6 +47,8 @@ export default function Login() {
                 setToastMessage("");
             }, 3000);
         }
+        submittingRef.current = false;
+        setSubmitClicked(false);
  
     }
 
@@ -98,13 +106,14 @@ export default function Login() {
 
                 <button
                 type="submit"
+                disabled={submitClicked}
                 className="w-full py-2 rounded-md font-medium shadow
                             bg-button-primary text-gray-800
                             hover:opacity-90 transition
                             focus:outline-none focus:ring-2 focus:ring-offset-2
                             focus:ring-[var(--color-primary)] dark:focus:ring-offset-gray-800"
                 >
-                Bestätigen
+                {submitClicked ? "Wird gesendet…" : "Bestätigen"}
                 </button>
             </form>
             </section>
