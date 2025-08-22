@@ -71,9 +71,29 @@ export default function Admin() {
                 </h2>
                 {session ? (
                       <>
-                        <p className="text-gray-600 dark:text-gray-300">Willkommen im Admin-Dashboard!</p>
-                        <p className="text-gray-600 dark:text-gray-300">klicke <Link href="/admin/dashboard">hier</Link> um zum Dashboard zu gelangen.</p>
+                        <h3 className="text-gray-600 dark:text-gray-300">Willkommen im Admin-Dashboard!</h3>
+                        <p className="text-gray-600 dark:text-gray-300">unten findest du die Links</p>
+                        <ul className="mt-4 space-y-2">
+                            <li className="w-full flex justify-center py-2 bg-button-primary text-white rounded-md hover:opacity-90 transition">
+                                <Link className=" text-center dark:text-blue-400 hover:underline" href={"/admin/dashboard"}>Musik</Link>
+                            </li>
+                            <li className="w-full flex justify-center py-2 mt-8 bg-button-primary text-white rounded-md hover:opacity-90 transition">
+                                <Link className=" text-center dark:text-blue-400 hover:underline" href={"/admin/gallery"}>Galerie</Link>
+                            </li>
+                        </ul>
+                        <div className="flex items-center justify-center mt-12  dark:bg-gray-900">
+                            <div className=" p-6 rounded-lg w-full max-w-md">
+                                    <button
+                                        type="button"
+                                        onClick={handleLogout}
+                                        className="w-full py-2 bg-highlight text-white rounded-md hover:opacity-90 transition"
+                                    >
+                                        Abmelden
+                                    </button>
+                            </div>
+                        </div>
                     </>
+                    
                    
                 ) : (
                     <p className="text-gray-600 dark:text-gray-300">Log dich ein um auf das Admin-Dashboard zuzugreifen.</p>
@@ -82,7 +102,7 @@ export default function Admin() {
             {showError && <ErrorMessage message={toastMessage} />}
             {showSuccess && <SuccessMessage message={toastMessage} />}    
 
-            {!session ? (
+            {!session && (
                 <div className="grid min-h-dvh grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
                         
                 
@@ -147,19 +167,6 @@ export default function Admin() {
                             </section>
                         </main>
                     </div>
-                ) : (
-                <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-md">
-                            <button
-                                type="button"
-                                onClick={handleLogout}
-                                className="w-full py-2 bg-button-primary text-white rounded-md hover:opacity-90 transition"
-                            >
-                                Abmelden
-                            </button>
-                    </div>
-                </div>
-
                 )}
 
         </>

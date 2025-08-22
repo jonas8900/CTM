@@ -2,7 +2,7 @@ import useGuest from "@/components/customhooks/useGuest";
 import Header from "@/components/header/header";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { TfiLayoutGrid3Alt } from "react-icons/tfi";
 import { TbLayoutListFilled } from "react-icons/tb";
 import {
@@ -12,6 +12,7 @@ import {
   IoImages,
   IoImage,
   IoCamera,
+  IoCloseCircle
 } from "react-icons/io5";
 import useSWR from "swr";
 
@@ -33,11 +34,6 @@ export default function Gallery() {
   } = useSWR(`/api/gallery/getImages?`);
   const MAX_FILES = 10;
 
-  console.log(images);
-
-  useEffect(() => {
-    if (ready && known === false) router.push("/login");
-  }, [ready, known, router]);
 
   useEffect(() => {
     if (!lbOpen) return;
@@ -60,135 +56,21 @@ export default function Gallery() {
     setLbOpen(true);
   };
 
-  // Fallback für Browser ohne createImageBitmap
-  async function decodeToBitmap(file) {
-    if ("createImageBitmap" in window) {
-      try {
-        return await createImageBitmap(file);
-      } catch {}
-    }
-    // Fallback
-    const url = URL.createObjectURL(file);
+
+  async function handleDeleteImage(imageId) {
+    if (!confirm("Bist du sicher, dass du dieses Bild löschen möchtest?")) return;
     try {
-      const img = await new Promise((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = reject;
-        image.src = url;
+      const res = await fetch(`/api/gallery/deleteImage/${imageId}`, {
+        method: "DELETE",
       });
-      // Canvas->Bitmap
-      const c = document.createElement("canvas");
-      c.width = img.naturalWidth || img.width;
-      c.height = img.naturalHeight || img.height;
-      const ctx = c.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      const blob = await new Promise((res) => c.toBlob(res));
-      return await createImageBitmap(blob);
-    } finally {
-      URL.revokeObjectURL(url);
+      if (!res.ok) throw new Error("Fehler beim Löschen des Bildes");
+      mutate();
+    } catch (error) {
+      console.error("Fehler beim Löschen des Bildes:", error);
+      alert("Fehler beim Löschen des Bildes. Bitte versuche es später erneut.");
     }
   }
 
-  async function fileToWebP(
-    file,
-    {
-      maxDim = 1600, // lange Kante
-      quality = 0.82, // Anfangsqualität
-      targetBytes = 500 * 1024, // Zielgröße ~500KB
-      minQuality = 0.65,
-      steps = 5, // max 5 steps zur qualitätsreduktion
-    } = {}
-  ) {
-    if (!(file instanceof File) || !file.type.startsWith("image/")) return file;
-
-    const bitmap = await decodeToBitmap(file);
-    const { width, height } = bitmap;
-
-    const scale = Math.min(1, maxDim / Math.max(width, height));
-    const tw = Math.max(1, Math.round(width * scale));
-    const th = Math.max(1, Math.round(height * scale));
-
-    const canvas = document.createElement("canvas");
-    canvas.width = tw;
-    canvas.height = th;
-    const ctx = canvas.getContext("2d", { alpha: true });
-    ctx.drawImage(bitmap, 0, 0, tw, th);
-
-    const encode = (q) =>
-      new Promise((resolve) =>
-        canvas.toBlob((b) => resolve(b), "image/webp", q)
-      );
-
-    let q = quality;
-    let blob = await encode(q);
-    if (!blob) return file;
-
-    if (targetBytes && blob.size > targetBytes) {
-      for (
-        let i = 0;
-        i < steps && q > minQuality && blob.size > targetBytes;
-        i++
-      ) {
-        q = Math.max(minQuality, q - 0.08);
-        const next = await encode(q);
-        if (next && next.size <= blob.size) blob = next;
-      }
-    }
-
-    const name = file.name.replace(/\.[^.]+$/, ".webp");
-    return new File([blob], name, {
-      type: "image/webp",
-      lastModified: Date.now(),
-    });
-  }
-
-  async function uploadFiles(fileList) {
-    const files = Array.from(fileList || []);
-    if (!files.length) return;
-
-    // nur die ersten 10 zulassen
-    let selected = files;
-    if (files.length > MAX_FILES) {
-      alert(
-        `Maximal ${MAX_FILES} Bilder pro Upload. Es werden nur die ersten ${MAX_FILES} hochgeladen.`
-      );
-      selected = files.slice(0, MAX_FILES);
-    }
-    setUploading(true);
-    try {
-      for (const original of selected) {
-        const processed = await fileToWebP(original, {
-          maxDim: 1600,
-          quality: 0.82,
-          targetBytes: 700 * 1024,
-          minQuality: 0.65,
-          steps: 5,
-        });
-
-        const fd = new FormData();
-        fd.append("image", processed, processed.name);
-
-        const res = await fetch("/api/gallery/upload", {
-          method: "POST",
-          body: fd,
-        });
-        if (!res.ok) throw new Error("upload failed");
-      }
-
-      setPickerOpen(false);
-      router.reload();
-    } catch (e) {
-      console.error("Failed to upload image(s)", e);
-      setPickerOpen(false);
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    setPickerOpen((o) => !o);
-  }
 
   return (
     <main className="relative h-screen">
@@ -204,32 +86,25 @@ export default function Gallery() {
         />
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="fixed z-[99] bottom-0 pb-4 pt-4 flex items-center justify-center w-full px-4">
-        <button
-          className="p-2 bg-[#FF8730] text-white rounded disabled:opacity-60 disabled:cursor-not-allowed"
-          disabled={uploading}
-          type="submit">
-          {uploading ? "Lade hoch…" : "Foto hinzufügen"}
-        </button>
-      </form>
-
+    
       {menu === "square" && (
+
         <section className="w-full pb-24">
           <ul className="grid grid-cols-3 gap-1 w-full">
             {images?.map((item, idx) => (
-              <li
-                key={item._id}
-                className="relative aspect-square overflow-hidden cursor-zoom-in"
-                onClick={() => openLightbox(idx)}>
-                <Image
-                  src={item.url}
-                  alt={item.name}
-                  fill
-                  sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-                  className="object-cover object-center"
-                />
+              <li key={item._id} className="relative">
+                <IoCloseCircle className="absolute z-99 top-1 right-1 w-8 h-8 text-red-500 cursor-pointer" onClick={() => handleDeleteImage(item._id)} />
+                <div
+                    className="relative aspect-square overflow-hidden cursor-zoom-in"
+                    onClick={() => openLightbox(idx)}>
+                    <Image
+                    src={item.url}
+                    alt={item.name}
+                    fill
+                    sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+                    className="object-cover object-center"
+                    />
+                </div>
               </li>
             ))}
           </ul>
@@ -333,29 +208,6 @@ export default function Gallery() {
         </div>
       )}
 
-      <input
-        ref={multiRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={(e) => uploadFiles(e.target.files)}
-      />
-      <input
-        ref={singleRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => uploadFiles(e.target.files)}
-      />
-      <input
-        ref={camRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={(e) => uploadFiles(e.target.files)}
-      />
     </main>
   );
 }
