@@ -93,7 +93,7 @@ export default function Gallery() {
           <ul className="grid grid-cols-3 gap-1 w-full">
             {images?.map((item, idx) => (
               <li key={item._id} className="relative">
-                <IoCloseCircle className="absolute z-99 top-1 right-1 w-8 h-8 text-red-500 cursor-pointer" onClick={() => handleDeleteImage(item._id)} />
+                <IoCloseCircle className="absolute z-1 top-1 right-1 w-8 h-8 text-red-500 cursor-pointer" onClick={() => handleDeleteImage(item._id)} />
                 <div
                     className="relative aspect-square overflow-hidden cursor-zoom-in"
                     onClick={() => openLightbox(idx)}>
@@ -115,18 +115,22 @@ export default function Gallery() {
         <section className="w-full pb-24">
           <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full p-1">
             {images?.map((item, id) => (
-              <li
-                key={item.id}
-                className="w-full cursor-zoom-in"
-                onClick={() => openLightbox(id)}>
-                <Image
-                  src={item.url}
-                  alt={item.name}
-                  width={1200}
-                  height={800}
-                  className="block w-full h-auto"
-                />
-              </li>
+                <li key={item._id} className="relative">
+                <IoCloseCircle className="absolute z-1 top-1 right-1 w-8 h-8 text-red-500 cursor-pointer" onClick={() => handleDeleteImage(item._id)} />
+                    <div
+                        key={item._id}
+                        className="w-full cursor-zoom-in"
+                        onClick={() => openLightbox(id)}>
+
+                        <Image
+                        src={item.url}
+                        alt={item.name}
+                        width={1200}
+                        height={800}
+                        className="block w-full h-auto"
+                        />
+                    </div>
+                </li>
             ))}
           </ul>
         </section>
