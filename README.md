@@ -1,40 +1,39 @@
-# 📸 Catch the Moment (CTM)
+#  Catch the Moment (CTM)
 
 **Catch the Moment** ist eine Hochzeits- und Event-Web-App, mit der Gäste Fotos teilen und Musikwünsche direkt über eine Spotify-Suche einreichen können.  
 Ein Admin-Login verwaltet aktuell **ein einziges Event** und kann sowohl Bilder als auch Musikwünsche moderieren.
 
-> Live-Demo: (falls aktiv) ctm-indol.vercel.app
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🎉 Für Gäste
+###  Für Gäste
 
-- 📸 **Fotos hochladen**
+-  **Fotos hochladen**
   - Einzelne Bilder hochladen
   - Mehrere Bilder auf einmal hochladen
   - Bilder direkt über die Kamera aufnehmen
-- 🧾 **Namen angeben**
+-  **Namen angeben**
   - Gäste müssen Vor- und Nachnamen eingeben, bevor sie Inhalte einreichen
-- 🎵 **Musikwünsche**
+-  **Musikwünsche**
   - Songs direkt über die Spotify-API suchen
   - Wunschliste an den Admin schicken
 
-### 🛡️ Für Admins
+###  Für Admins
 
-- 🔐 **Admin-Login**
+-  **Admin-Login**
   - Ein einfacher, zentraler Admin-Login (aktuell nur **ein Event**)
-- 🖼️ **Bildverwaltung**
+-  **Bildverwaltung**
   - Vom Admin hochgeladene Bilder einsehbar
   - Bilder können gelöscht werden
-- 🎶 **Musikwunsch-Verwaltung**
+-  **Musikwunsch-Verwaltung**
   - Musikwünsche einsehen
   - Wünsche **annehmen**, **ablehnen**, **löschen** oder auf **wartend** lassen
 
 ---
 
-## 🧭 Vision & Roadmap
+##  Vision & Roadmap
 
 Aktueller Stand:  
 - Ein Event  
@@ -43,20 +42,20 @@ Aktueller Stand:
 
 Geplante Weiterentwicklung:
 
-- 🔀 **Multi-Event-Unterstützung**
+-  **Multi-Event-Unterstützung**
   - Trennung der Daten pro Event (eigene Gäste, eigene Bilder, eigene Musikwünsche)
-- 👥 **Rollen & Rechte**
+-  **Rollen & Rechte**
   - Besitzer eines Events
   - Gast
   - DJ (nur Musikwünsche verwalten)
   - Globaler App-Admin
-- 🎚️ **Besserer DJ-/Musik-Modus**
+-  **Besserer DJ-/Musik-Modus**
   - Übersichtliche Queue von Musikwünschen
   - Status pro Song (gespielt, übersprungen, offen)
 
 ---
 
-## 🛠️ Tech-Stack
+##  Tech-Stack
 
 - **Framework:** Next.js 
 - **Sprache:** JavaScript 
@@ -72,7 +71,7 @@ Die Spotify-Suche nutzt die Spotify Web API, konfiguriert über Environment Vari
 
 ---
 
-## 🚀 Lokal starten
+##  Lokal starten
 
 ### 1. Repository klonen
 
@@ -89,7 +88,7 @@ npm install
 
 ### 3. Environment-Variablen setzen
 
-Erstelle eine Datei `.env.local` im Projektroot, bitte auf jeden Fall darauf achten auch in der ENV die Passwörter zu hashen!:
+Erstelle eine Datei `.env.local` im Projektroot, bitte auf jeden Fall darauf achten auch in der ENV die Passwörter zu hashen:
 
 \`\`\`env
 SPOTIFY_CLIENT_ID=...
