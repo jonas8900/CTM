@@ -14,6 +14,59 @@ import {
   IoCamera,
 } from "react-icons/io5";
 import useSWR from "swr";
+import { Download } from "lucide-react";
+
+function isIOSStandalone() {
+  const ua = navigator.userAgent || "";
+  const isIOS = /iphone|ipad|ipod/i.test(ua);
+  const standalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator.standalone === true);
+  return isIOS && standalone;
+}
+
+function triggerDownload(url, filename) {
+  // 1) normaler Download-Versuch
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    if (filename) a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch {}
+
+  // 2) iOS-PWA: im neuen Tab öffnen → Nutzer kann speichern/teilen
+  if (isIOSStandalone()) {
+    window.open(url, "_blank");
+  }
+}
+
+function postZipInNewTab(action, payloadObj) {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = action;
+  form.target = "_blank"; // iOS-PWA freundlich
+
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "items";
+  input.value = JSON.stringify(payloadObj.items);
+
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
+  form.remove();
+}
+
+function getFilenameFromUrl(url) {
+  try {
+    return decodeURIComponent(new URL(url).pathname.split("/").pop());
+  } catch {
+    return "file";
+  }
+}
 
 export default function Gallery() {
   const router = useRouter();
@@ -33,8 +86,6 @@ export default function Gallery() {
   } = useSWR(`/api/gallery/getImages?`);
   const MAX_FILES = 10;
 
-  console.log(images);
-
   useEffect(() => {
     if (ready && known === false) router.push("/login");
   }, [ready, known, router]);
@@ -53,21 +104,19 @@ export default function Gallery() {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", onKey);
     };
-  }, [lbOpen]);
+  }, [lbOpen, images?.length]);
 
   const openLightbox = (idx) => {
     setLbIndex(idx);
     setLbOpen(true);
   };
 
-  // Fallback für Browser ohne createImageBitmap
   async function decodeToBitmap(file) {
     if ("createImageBitmap" in window) {
       try {
         return await createImageBitmap(file);
       } catch {}
     }
-    // Fallback
     const url = URL.createObjectURL(file);
     try {
       const img = await new Promise((resolve, reject) => {
@@ -76,7 +125,6 @@ export default function Gallery() {
         image.onerror = reject;
         image.src = url;
       });
-      // Canvas->Bitmap
       const c = document.createElement("canvas");
       c.width = img.naturalWidth || img.width;
       c.height = img.naturalHeight || img.height;
@@ -92,11 +140,11 @@ export default function Gallery() {
   async function fileToWebP(
     file,
     {
-      maxDim = 1600, // lange Kante
-      quality = 0.82, // Anfangsqualität
-      targetBytes = 500 * 1024, // Zielgröße ~500KB
+      maxDim = 1600,
+      quality = 0.82,
+      targetBytes = 500 * 1024,
       minQuality = 0.65,
-      steps = 5, // max 5 steps zur qualitätsreduktion
+      steps = 5,
     } = {}
   ) {
     if (!(file instanceof File) || !file.type.startsWith("image/")) return file;
@@ -115,20 +163,14 @@ export default function Gallery() {
     ctx.drawImage(bitmap, 0, 0, tw, th);
 
     const encode = (q) =>
-      new Promise((resolve) =>
-        canvas.toBlob((b) => resolve(b), "image/webp", q)
-      );
+      new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/webp", q));
 
     let q = quality;
     let blob = await encode(q);
     if (!blob) return file;
 
     if (targetBytes && blob.size > targetBytes) {
-      for (
-        let i = 0;
-        i < steps && q > minQuality && blob.size > targetBytes;
-        i++
-      ) {
+      for (let i = 0; i < steps && q > minQuality && blob.size > targetBytes; i++) {
         q = Math.max(minQuality, q - 0.08);
         const next = await encode(q);
         if (next && next.size <= blob.size) blob = next;
@@ -146,12 +188,9 @@ export default function Gallery() {
     const files = Array.from(fileList || []);
     if (!files.length) return;
 
-    // nur die ersten 10 zulassen
     let selected = files;
     if (files.length > MAX_FILES) {
-      alert(
-        `Maximal ${MAX_FILES} Bilder pro Upload. Es werden nur die ersten ${MAX_FILES} hochgeladen.`
-      );
+      alert(`Maximal ${MAX_FILES} Bilder pro Upload. Es werden nur die ersten ${MAX_FILES} hochgeladen.`);
       selected = files.slice(0, MAX_FILES);
     }
     setUploading(true);
@@ -190,6 +229,46 @@ export default function Gallery() {
     setPickerOpen((o) => !o);
   }
 
+  // ---- DOWNLOADS ----
+
+  async function downloadOne(item) {
+    const filename = item.name || getFilenameFromUrl(item.url) || "image";
+    triggerDownload(item.url, filename);
+  }
+
+  async function downloadAll() {
+    if (!images?.length) return;
+
+    const items = images.map((it) => ({
+      url: it.url,
+      name: it.name || getFilenameFromUrl(it.url),
+    }));
+
+    if (isIOSStandalone()) {
+      // iOS-PWA: Formular-POST im neuen Tab → stabiler Download
+      postZipInNewTab("/api/gallery/download-zip", { items });
+      return;
+    }
+
+    // Desktop + Android: fetch + Blob
+    const r = await fetch("/api/gallery/download-zip", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    });
+
+    if (!r.ok) return alert("ZIP-Download fehlgeschlagen");
+
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    triggerDownload(url, "gallery.zip");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+
+  function handleDownload() {
+    downloadAll();
+  }
+
   return (
     <main className="relative h-screen">
       <Header />
@@ -202,15 +281,22 @@ export default function Gallery() {
           className="w-7 h-7 m-2 ml-0 cursor-pointer"
           onClick={() => setMenu("portrait")}
         />
+        <Download
+          className="w-7 h-7 m-2 ml-auto cursor-pointer"
+          onClick={handleDownload}
+          title="Alle herunterladen"
+        />
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="fixed z-[99] bottom-0 pb-4 pt-4 flex items-center justify-center w-full px-4">
+        className="fixed z-[99] bottom-0 pb-4 pt-4 flex items-center justify-center w-full px-4"
+      >
         <button
           className="p-2 bg-[#FF8730] text-white rounded disabled:opacity-60 disabled:cursor-not-allowed"
           disabled={uploading}
-          type="submit">
+          type="submit"
+        >
           {uploading ? "Lade hoch…" : "Foto hinzufügen"}
         </button>
       </form>
@@ -222,7 +308,8 @@ export default function Gallery() {
               <li
                 key={item._id}
                 className="relative aspect-square overflow-hidden cursor-zoom-in"
-                onClick={() => openLightbox(idx)}>
+                onClick={() => openLightbox(idx)}
+              >
                 <Image
                   src={item.url}
                   alt={item.name}
@@ -243,7 +330,8 @@ export default function Gallery() {
               <li
                 key={item.id}
                 className="w-full cursor-zoom-in"
-                onClick={() => openLightbox(id)}>
+                onClick={() => openLightbox(id)}
+              >
                 <Image
                   src={item.url}
                   alt={item.name}
@@ -262,10 +350,12 @@ export default function Gallery() {
           className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex items-center justify-center cursor-zoom-out"
           role="dialog"
           aria-modal="true"
-          onClick={() => setLbOpen(false)}>
+          onClick={() => setLbOpen(false)}
+        >
           <div
             className="relative w-full h-full cursor-default"
-            onClick={(e) => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}
+          >
             <Image
               src={images[lbIndex]?.url}
               alt={images[lbIndex]?.name}
@@ -273,28 +363,41 @@ export default function Gallery() {
               className="object-contain w-full h-full"
               priority
             />
+
             <button
               className="absolute top-4 right-4 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white"
               onClick={() => setLbOpen(false)}
-              aria-label="Schließen">
+              aria-label="Schließen"
+            >
               <IoClose className="w-6 h-6" />
             </button>
+
             <button
               className="absolute left-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 hover:bg-black/80 text-white"
-              onClick={() =>
-                setLbIndex((i) => (i - 1 + images.length) % images.length)
-              }
-              aria-label="Vorheriges Bild">
+              onClick={() => setLbIndex((i) => (i - 1 + images.length) % images.length)}
+              aria-label="Vorheriges Bild"
+            >
               <IoChevronBack className="w-7 h-7" />
             </button>
             <button
               className="absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 hover:bg-black/80 text-white"
               onClick={() => setLbIndex((i) => (i + 1) % images?.length)}
-              aria-label="Nächstes Bild">
+              aria-label="Nächstes Bild"
+            >
               <IoChevronForward className="w-7 h-7" />
             </button>
+
+            <button
+              className="absolute top-4 left-4 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white"
+              onClick={() => downloadOne(images[lbIndex])}
+              aria-label="Dieses Bild herunterladen"
+              title="Dieses Bild herunterladen"
+            >
+              <Download className="w-6 h-6" />
+            </button>
+
             <div className="absolute bottom-4 left-0 right-0 text-center text-white/80 text-sm px-4">
-              {images[lbIndex]?.title} · {lbIndex + 1}/{images?.length}
+              {images[lbIndex]?.title || images[lbIndex]?.name || "Bild"} · {lbIndex + 1}/{images?.length}
             </div>
           </div>
         </div>
@@ -307,7 +410,8 @@ export default function Gallery() {
               type="button"
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700"
               onClick={() => multiRef.current?.click()}
-              disabled={uploading}>
+              disabled={uploading}
+            >
               <IoImages className="w-5 h-5" />
               Mehrere aus Galerie wählen
             </button>
@@ -316,7 +420,8 @@ export default function Gallery() {
               type="button"
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700"
               onClick={() => singleRef.current?.click()}
-              disabled={uploading}>
+              disabled={uploading}
+            >
               <IoImage className="w-5 h-5" />
               Ein Bild aus Galerie
             </button>
@@ -325,7 +430,8 @@ export default function Gallery() {
               type="button"
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700"
               onClick={() => camRef.current?.click()}
-              disabled={uploading}>
+              disabled={uploading}
+            >
               <IoCamera className="w-5 h-5" />
               Foto aufnehmen
             </button>
